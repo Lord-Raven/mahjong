@@ -267,7 +267,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                     
                     <defs>
                         {/* Shadow gradient (dark green) */}
-                        <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                             <stop offset="0%" stopColor="#020" />
                             <stop offset={`${Math.max(0, pathData.gradientPosition - 15)}%`} stopColor="#020" />
                             <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgba(5, 17, 0, ${1 - pathData.gradientIntensity * 0.3})`} />
@@ -276,7 +276,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                         </linearGradient>
                         
                         {/* Main side gradient (light gray) */}
-                        <linearGradient id="sideGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <linearGradient id="sideGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                             <stop offset="0%" stopColor="#888" />
                             <stop offset={`${Math.max(0, pathData.gradientPosition - 15)}%`} stopColor="#888" />
                             <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgb(${204 + Math.round(51 * pathData.gradientIntensity)}, ${204 + Math.round(51 * pathData.gradientIntensity)}, ${204 + Math.round(51 * pathData.gradientIntensity)})`} />
