@@ -77,12 +77,11 @@ const getTilePath = (rotation: number): { path: string; leftX: number; rightX: n
     rotation = rotation % 360;
     const rad = (rotation * Math.PI) / 180;
 
-    // Define tile face centered at (0, 0) for proper rotation
     const relativePositions: {x: number, y: number}[] = [
-        {x: -TILE_WIDTH / 2 + TILE_BEVEL - TILE_BORDER, y: -TILE_HEIGHT / 2 + TILE_BEVEL - TILE_BORDER},
-        {x: TILE_WIDTH / 2 - TILE_BEVEL + TILE_BORDER, y: -TILE_HEIGHT / 2 + TILE_BEVEL - TILE_BORDER},
-        {x: TILE_WIDTH / 2 - TILE_BEVEL + TILE_BORDER, y: TILE_HEIGHT / 2 - TILE_BEVEL + TILE_BORDER},
-        {x: -TILE_WIDTH / 2 + TILE_BEVEL - TILE_BORDER, y: TILE_HEIGHT / 2 - TILE_BEVEL + TILE_BORDER},
+        {x: -TILE_WIDTH + TILE_BEVEL - TILE_BORDER, y: -TILE_HEIGHT + TILE_BEVEL - TILE_BORDER},
+        {x: -TILE_BEVEL + TILE_BORDER, y: -TILE_HEIGHT + TILE_BEVEL - TILE_BORDER},
+        {x: -TILE_BEVEL + TILE_BORDER, y:  - TILE_BEVEL + TILE_BORDER},
+        {x: -TILE_WIDTH + TILE_BEVEL - TILE_BORDER, y:  - TILE_BEVEL + TILE_BORDER},
     ]
 
     // Rotate positions based on rotation:
@@ -114,14 +113,12 @@ const getTilePath = (rotation: number): { path: string; leftX: number; rightX: n
     
     // Calculate gradient position and intensity based on the fifth point's x position
     const fifthPointX = finalPositions[4].x;
-    
-    // Use centered tile dimensions for gradient coordinate space
-    const unrotatedLeftX = -TILE_WIDTH / 2 + TILE_BEVEL - TILE_BORDER;
-    const unrotatedRightX = TILE_WIDTH / 2 - TILE_BEVEL + TILE_BORDER;
-    const rangeX = unrotatedRightX - unrotatedLeftX;
+    const leftmostX = finalPositions[0].x - TILE_BORDER;
+    const rightmostX = finalPositions[2].x + TILE_BORDER;
+    const rangeX = rightmostX - leftmostX;
     
     // Normalize the position of the fifth point between left and right (0 to 1)
-    const normalizedPosition = (fifthPointX - unrotatedLeftX) / rangeX;
+    const normalizedPosition = (fifthPointX - leftmostX) / rangeX;
     
     // Calculate intensity: maximum in the middle, fading near edges
     // Using a smooth function that peaks at 0.5 and goes to 0 at edges
@@ -140,8 +137,8 @@ const getTilePath = (rotation: number): { path: string; leftX: number; rightX: n
     
     return {
         path,
-        leftX: unrotatedLeftX,
-        rightX: unrotatedRightX,
+        leftX: leftmostX,
+        rightX: rightmostX,
         gradientPosition: normalizedPosition * 100, // Convert to percentage
         gradientIntensity: intensity
     };
