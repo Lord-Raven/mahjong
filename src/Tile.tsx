@@ -43,15 +43,15 @@ const GRADIENT_STRING: string = Array(99).fill(0).map((_, i) => {
         const prevIn = HIGHLIGHTS.includes(position - 1);
         const nextIn = HIGHLIGHTS.includes(position + 1);
         if (!prevIn && !nextIn) {
-            return `#fff ${position}%, #000 ${position + 1}%`;
+            return `#000 ${position - 0.2}%, #ccc ${position}%, #000 ${position + 0.2}%`;
         } else if (!prevIn && nextIn) {
-            return `#fff ${position}%`;
+            return `#000 ${position - 0.2}%, #ccc ${position}%`;
         } else if (prevIn && !nextIn) {
-            return `#fff ${position}%, #000 ${position + 1}%`;
-        } else {
-            return `#fff ${position}%`;
+            return `#ccc ${position}%, #000 ${position + 0.2}%`;
+        } else { // both are in, so this should already be highlighted; no need to be explicit
+            return null;
         }
-    } else {
+    } else { // No hilight; transitions are covered by any highlighted neighbors
         return null;
     }
 }).filter(s => s !== null).join(', ');
@@ -73,7 +73,7 @@ type MessyProps = {
     rotation: number;
 }
 
-const getTilePath = (rotation: number) => {
+const getTilePath = (rotation: number): { path: string; gradientPosition: number; gradientIntensity: number } => {
     rotation = rotation % 360;
     const rad = (rotation * Math.PI) / 180;
 
@@ -110,7 +110,22 @@ const getTilePath = (rotation: number) => {
     finalPositions[3].y += TILE_THICKNESS;
     finalPositions[4].y += TILE_THICKNESS;
     finalPositions[5].y += TILE_THICKNESS;
-    return `
+    
+    // Calculate gradient position and intensity based on the fifth point's x position
+    const fifthPointX = finalPositions[4].x;
+    const leftmostX = finalPositions[0].x;
+    const rightmostX = finalPositions[2].x;
+    const rangeX = rightmostX - leftmostX;
+    
+    // Normalize the position of the fifth point between left and right (0 to 1)
+    const normalizedPosition = (fifthPointX - leftmostX) / rangeX;
+    
+    // Calculate intensity: maximum in the middle, fading near edges
+    // Using a smooth function that peaks at 0.5 and goes to 0 at edges
+    const distanceFromCenter = Math.abs(normalizedPosition - 0.5);
+    const intensity = Math.max(0, 1 - (distanceFromCenter * 2)); // 1 at center, 0 at edges
+    
+    const path = `
         M ${finalPositions[0].x} ${finalPositions[0].y}
         L ${finalPositions[1].x} ${finalPositions[1].y}
         L ${finalPositions[2].x} ${finalPositions[2].y}
@@ -119,6 +134,12 @@ const getTilePath = (rotation: number) => {
         L ${finalPositions[5].x} ${finalPositions[5].y}
         Z
         `;
+    
+    return {
+        path,
+        gradientPosition: normalizedPosition * 100, // Convert to percentage
+        gradientIntensity: intensity
+    };
 }
 
 const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
@@ -171,9 +192,9 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
         return () => clearInterval(interval);
     }, [rotation]);
 
-    const [bottomPath, setBottomPath] = useState(() => getTilePath(rotation.get()));
+    const [pathData, setPathData] = useState(() => getTilePath(rotation.get()));
     useMotionValueEvent(rotation, 'change', (r) => {
-        setBottomPath(getTilePath(r));
+        setPathData(getTilePath(r));
     })
     // Index within the tileset:
     const index = tileProps.faceUp && Object.keys(TileValue).includes(tileProps.value) ? TileValue[tileProps.value].index: BACK_INDEX;
@@ -243,10 +264,30 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                     width={tileWidth}
                     height={tileHeight}
                     viewBox={`-${TILE_WIDTH / 2} -${TILE_HEIGHT / 2} ${TILE_WIDTH} ${TILE_HEIGHT}`}>
+                    
+                    <defs>
+                        {/* Shadow gradient (dark green) */}
+                        <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#020" />
+                            <stop offset={`${Math.max(0, pathData.gradientPosition - 15)}%`} stopColor="#020" />
+                            <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgba(5, 17, 0, ${1 - pathData.gradientIntensity * 0.3})`} />
+                            <stop offset={`${Math.min(100, pathData.gradientPosition + 15)}%`} stopColor="#020" />
+                            <stop offset="100%" stopColor="#020" />
+                        </linearGradient>
+                        
+                        {/* Main side gradient (light gray) */}
+                        <linearGradient id="sideGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#888" />
+                            <stop offset={`${Math.max(0, pathData.gradientPosition - 15)}%`} stopColor="#888" />
+                            <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgb(${204 + Math.round(51 * pathData.gradientIntensity)}, ${204 + Math.round(51 * pathData.gradientIntensity)}, ${204 + Math.round(51 * pathData.gradientIntensity)})`} />
+                            <stop offset={`${Math.min(100, pathData.gradientPosition + 15)}%`} stopColor="#888" />
+                            <stop offset="100%" stopColor="#888" />
+                        </linearGradient>
+                    </defs>
 
-                    <path d={bottomPath} fill="#051" stroke="#051" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
+                    <path d={pathData.path} fill="url(#shadowGradient)" stroke="url(#shadowGradient)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
                           transform={`translate(0, ${TILE_THICKNESS})`}/>
-                    <path d={bottomPath} fill="#ccc" stroke="#ccc" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
+                    <path d={pathData.path} fill="url(#sideGradient)" stroke="url(#sideGradient)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
                 </svg>
             </motion.div>
             {/* Top of tile: */}
