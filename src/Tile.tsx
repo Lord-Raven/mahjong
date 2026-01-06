@@ -73,7 +73,7 @@ type MessyProps = {
     rotation: number;
 }
 
-const getTilePath = (rotation: number): { path: string; gradientPosition: number; gradientIntensity: number } => {
+const getTilePath = (rotation: number): { path: string; leftX: number; rightX: number; gradientPosition: number; gradientIntensity: number } => {
     rotation = rotation % 360;
     const rad = (rotation * Math.PI) / 180;
 
@@ -137,6 +137,8 @@ const getTilePath = (rotation: number): { path: string; gradientPosition: number
     
     return {
         path,
+        leftX: leftmostX,
+        rightX: rightmostX,
         gradientPosition: normalizedPosition * 100, // Convert to percentage
         gradientIntensity: intensity
     };
@@ -269,9 +271,9 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                         {/* Shadow gradient (dark green) */}
                         <linearGradient 
                             id="shadowGradient" 
-                            x1={-TILE_WIDTH + TILE_BEVEL - TILE_BORDER} 
+                            x1={pathData.leftX} 
                             y1="0" 
-                            x2={-TILE_BEVEL + TILE_BORDER} 
+                            x2={pathData.rightX} 
                             y2="0"
                             gradientUnits="userSpaceOnUse">
                             <stop offset="0%" stopColor="#020" />
@@ -284,9 +286,9 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                         {/* Main side gradient (light gray) */}
                         <linearGradient 
                             id="sideGradient" 
-                            x1={-TILE_WIDTH + TILE_BEVEL - TILE_BORDER} 
+                            x1={pathData.leftX} 
                             y1="0" 
-                            x2={-TILE_BEVEL + TILE_BORDER} 
+                            x2={pathData.rightX} 
                             y2="0"
                             gradientUnits="userSpaceOnUse">
                             <stop offset="0%" stopColor="rgb(153, 153, 153)" />
