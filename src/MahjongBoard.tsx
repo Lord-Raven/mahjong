@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {GameState} from "./Mahjong";
 import Tile, {TILE_THICKNESS, TILE_WIDTH} from "./Tile";
 
@@ -6,6 +6,12 @@ import Tile, {TILE_THICKNESS, TILE_WIDTH} from "./Tile";
 // It receives the current game state as a prop, which includes information about players, their hands, discards, and the wall.
 // The board should be responsive and scale appropriately for different screen sizes.
 // We'll use framer-motion to handle animations and positioning of tiles and player areas.
+
+type TilePosition = {
+    x: number;
+    y: number;
+    rotation: number;
+}
 
 type MahjongBoardProps = {
     gameState: GameState;
@@ -16,6 +22,22 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
     const displaySize = 100; // Display area is a square that fits within the viewport
     const boardSize = 70; // Scale of the board within the display area
     const playerAreaSize = 15; // Width of each player's area
+
+    // Track tile positions for draggable tiles
+    const [tilePositions, setTilePositions] = useState<Map<string, TilePosition>>(new Map());
+
+    const getTilePosition = (key: string, defaultX: number, defaultY: number, defaultRotation: number): TilePosition => {
+        return tilePositions.get(key) || { x: defaultX, y: defaultY, rotation: defaultRotation };
+    };
+
+    const updateTilePosition = (key: string, x: number, y: number) => {
+        setTilePositions(prev => {
+            const newPositions = new Map(prev);
+            const current = prev.get(key) || { x: 0, y: 0, rotation: 0 };
+            newPositions.set(key, { ...current, x, y });
+            return newPositions;
+        });
+    };
 
     return (
         /* The main container for the mahjong board; this should be displaySize height and width and centered. */
@@ -87,57 +109,91 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
             */}
 
             {/* South player, at the bottom. Display a Tile for each tile in hand */
-                gameState.players[0].hand.map((tile, index) => (
-                    <Tile
-                        key={`south-hand-${index}`}
-                        x={index * TILE_WIDTH}
-                        y={boardSize + playerAreaSize}
-                        rotation={0}
-                        faceUp={true}
-                        value={tile}
-                        layer={1}
-                    />
-                ))
+                gameState.players[0].hand.map((tile, index) => {
+                    const key = `south-hand-${index}`;
+                    const defaultX = index * TILE_WIDTH;
+                    const defaultY = boardSize + playerAreaSize;
+                    const pos = getTilePosition(key, defaultX, defaultY, 0);
+                    return (
+                        <Tile
+                            key={key}
+                            x={pos.x}
+                            y={pos.y}
+                            rotation={pos.rotation}
+                            faceUp={true}
+                            value={tile}
+                            layer={1}
+                            draggable={true}
+                            onDragEnd={(newX, newY) => updateTilePosition(key, newX, newY)}
+                        />
+                    );
+                })
             }
             {
-                gameState.players[0].discard.map((tile, index) => (
-                    <Tile
-                        key={`south-discard-${index}`}
-                        x={index * TILE_WIDTH}
-                        y={boardSize + playerAreaSize - 10}
-                        rotation={0}
-                        faceUp={true}
-                        value={tile}
-                        layer={1}
-                    />
-                ))
+                gameState.players[0].discard.map((tile, index) => {
+                    const key = `south-discard-${index}`;
+                    const defaultX = index * TILE_WIDTH;
+                    const defaultY = boardSize + playerAreaSize - 10;
+                    const pos = getTilePosition(key, defaultX, defaultY, 0);
+                    return (
+                        <Tile
+                            key={key}
+                            x={pos.x}
+                            y={pos.y}
+                            rotation={pos.rotation}
+                            faceUp={true}
+                            value={tile}
+                            layer={1}
+                            draggable={true}
+                            onDragEnd={(newX, newY) => updateTilePosition(key, newX, newY)}
+                        />
+                    );
+                })
             }
 
             {/* West Player, on the left. Rotate tiles 90 degrees */
-                gameState.players[1].hand.map((tile, index) => (
-                    <Tile
-                        key={`west-hand-${index}`}
-                        x={index * (TILE_WIDTH * 1.7)}
-                        y={index * (TILE_WIDTH * 1.7)}
-                        rotation={index * 30}
-                        faceUp={true}
-                        value={tile}
-                        layer={1}
-                    />
-                ))
+                gameState.players[1].hand.map((tile, index) => {
+                    const key = `west-hand-${index}`;
+                    const defaultX = index * (TILE_WIDTH * 1.7);
+                    const defaultY = index * (TILE_WIDTH * 1.7);
+                    const defaultRotation = index * 30;
+                    const pos = getTilePosition(key, defaultX, defaultY, defaultRotation);
+                    return (
+                        <Tile
+                            key={key}
+                            x={pos.x}
+                            y={pos.y}
+                            rotation={pos.rotation}
+                            faceUp={true}
+                            value={tile}
+                            layer={1}
+                            draggable={true}
+                            onDragEnd={(newX, newY) => updateTilePosition(key, newX, newY)}
+                        />
+                    );
+                })
             }
             {
-                gameState.players[1].discard.map((tile, index) => (
-                    <Tile
-                        key={`west-discard-${index}`}
-                        x={index * (TILE_WIDTH * 1.7)}
-                        y={index * (TILE_WIDTH * 1.7)}
-                        rotation={index * 30}
-                        faceUp={true}
-                        value={tile}
-                        layer={1}
-                    />
-                ))
+                gameState.players[1].discard.map((tile, index) => {
+                    const key = `west-discard-${index}`;
+                    const defaultX = index * (TILE_WIDTH * 1.7);
+                    const defaultY = index * (TILE_WIDTH * 1.7);
+                    const defaultRotation = index * 30;
+                    const pos = getTilePosition(key, defaultX, defaultY, defaultRotation);
+                    return (
+                        <Tile
+                            key={key}
+                            x={pos.x}
+                            y={pos.y}
+                            rotation={pos.rotation}
+                            faceUp={true}
+                            value={tile}
+                            layer={1}
+                            draggable={true}
+                            onDragEnd={(newX, newY) => updateTilePosition(key, newX, newY)}
+                        />
+                    );
+                })
             }
 
         </div>

@@ -63,6 +63,8 @@ type TileProps = {
     faceUp: boolean; // whether the tile is face up or down
     value: string; // the tile value (emoji)
     layer: number; // visual layer, which impacts z-index
+    draggable?: boolean; // whether the tile can be dragged
+    onDragEnd?: (x: number, y: number) => void; // callback when drag ends
 }
 
 type MessyProps = {
@@ -135,6 +137,11 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
     const POSITION_THRESHOLD = 0.5; // vmin
     const ROTATION_THRESHOLD = 5; // degrees
 
+    // Drag state
+    const dragX = useMotionValue(0);
+    const dragY = useMotionValue(0);
+    const [isDragging, setIsDragging] = useState(false);
+
     useEffect(() => {
         const dx = Math.abs(Number(tileProps.x) - Number(lastProps.x));
         const dy = Math.abs(Number(tileProps.y) - Number(lastProps.y));
@@ -186,7 +193,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
         position: 'absolute',
         width: 0,
         height: 0,
-        pointerEvents: 'none',
+        pointerEvents: tileProps.draggable ? 'auto' : 'none',
         userSelect: 'none',
         touchAction: 'manipulation',
         overflow: 'visible',
@@ -199,6 +206,8 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                 style={{
                     ...containerStyle,
                     zIndex: tileProps.layer * 2 - 1,
+                    x: dragX,
+                    y: dragY,
                 }}
                 animate={{
                     x: `${tileProps.x + messy.x}vmin`,
@@ -208,6 +217,20 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 }}
                 transition={{type: 'spring', stiffness: 300, damping: 20}}
+                drag={tileProps.draggable}
+                dragMomentum={false}
+                dragElastic={0}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={(_, info) => {
+                    setIsDragging(false);
+                    // Convert pixel offset to vmin and update position
+                    const vmin = Math.min(window.innerWidth, window.innerHeight) / 100;
+                    const newX = tileProps.x + info.offset.x / vmin;
+                    const newY = tileProps.y + info.offset.y / vmin;
+                    dragX.set(0);
+                    dragY.set(0);
+                    tileProps.onDragEnd?.(newX, newY);
+                }}
             >
                 <svg
                     style={{
@@ -230,7 +253,9 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
             <motion.div
                 style={{
                     ...containerStyle,
-                    zIndex: tileProps.layer * 2 + 1
+                    zIndex: tileProps.layer * 2 + 1,
+                    x: dragX,
+                    y: dragY,
                 }}
                 animate={{
                     x: `${tileProps.x + messy.x}vmin`,
@@ -249,6 +274,19 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                 }}
                 transition={{type: 'spring', stiffness: 300, damping: 20}}
                 onHoverStart={onHover}
+                drag={tileProps.draggable}
+                dragMomentum={false}
+                dragElastic={0}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={(_, info) => {
+                    setIsDragging(false);
+                    const vmin = Math.min(window.innerWidth, window.innerHeight) / 100;
+                    const newX = tileProps.x + info.offset.x / vmin;
+                    const newY = tileProps.y + info.offset.y / vmin;
+                    dragX.set(0);
+                    dragY.set(0);
+                    tileProps.onDragEnd?.(newX, newY);
+                }}
             >
                 <div style={tileStyle}>
                     {/* Visual content already in your top face */}
