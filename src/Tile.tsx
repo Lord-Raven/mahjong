@@ -73,15 +73,15 @@ type MessyProps = {
     rotation: number;
 }
 
-const getTilePath = (rotation: number): { path: string; leftX: number; rightX: number; gradientPosition: number; gradientIntensity: number } => {
+const getTilePath = (rotation: number): { path: string; left: number, right: number, top: number, bottom: number; gradientPosition: number; gradientIntensity: number } => {
     rotation = rotation % 360;
     const rad = (rotation * Math.PI) / 180;
 
     const relativePositions: {x: number, y: number}[] = [
-        {x: -TILE_WIDTH + TILE_BEVEL - TILE_BORDER, y: -TILE_HEIGHT + TILE_BEVEL - TILE_BORDER},
-        {x: -TILE_BEVEL + TILE_BORDER, y: -TILE_HEIGHT + TILE_BEVEL - TILE_BORDER},
-        {x: -TILE_BEVEL + TILE_BORDER, y:  - TILE_BEVEL + TILE_BORDER},
-        {x: -TILE_WIDTH + TILE_BEVEL - TILE_BORDER, y:  - TILE_BEVEL + TILE_BORDER},
+        {x: -TILE_WIDTH / 2 + TILE_BEVEL - TILE_BORDER, y: -TILE_HEIGHT / 2 + TILE_BEVEL - TILE_BORDER},
+        {x: TILE_WIDTH / 2 - TILE_BEVEL + TILE_BORDER, y: -TILE_HEIGHT / 2 + TILE_BEVEL - TILE_BORDER},
+        {x: TILE_WIDTH / 2 - TILE_BEVEL + TILE_BORDER, y:  TILE_HEIGHT / 2 - TILE_BEVEL + TILE_BORDER},
+        {x: -TILE_WIDTH / 2 + TILE_BEVEL - TILE_BORDER, y:  TILE_HEIGHT / 2 - TILE_BEVEL + TILE_BORDER},
     ]
 
     // Rotate positions based on rotation:
@@ -110,16 +110,16 @@ const getTilePath = (rotation: number): { path: string; leftX: number; rightX: n
     finalPositions[3].y += TILE_THICKNESS;
     finalPositions[4].y += TILE_THICKNESS;
     finalPositions[5].y += TILE_THICKNESS;
-    
+
     // Calculate gradient position and intensity based on the fifth point's x position
     const fifthPointX = finalPositions[4].x;
     const leftmostX = finalPositions[0].x - TILE_BORDER;
     const rightmostX = finalPositions[2].x + TILE_BORDER;
     const rangeX = rightmostX - leftmostX;
-    
+
     // Normalize the position of the fifth point between left and right (0 to 1)
     const normalizedPosition = (fifthPointX - leftmostX) / rangeX;
-    
+
     // Calculate intensity: maximum in the middle, fading near edges
     // Using a smooth function that peaks at 0.5 and goes to 0 at edges
     const distanceFromCenter = Math.abs(normalizedPosition - 0.5);
@@ -137,8 +137,10 @@ const getTilePath = (rotation: number): { path: string; leftX: number; rightX: n
     
     return {
         path,
-        leftX: leftmostX,
-        rightX: rightmostX,
+        left: leftmostX,
+        right: rightmostX,
+        top: finalPositions[1].y,
+        bottom: finalPositions[4].y,
         gradientPosition: normalizedPosition * 100, // Convert to percentage
         gradientIntensity: intensity
     };
@@ -235,7 +237,6 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                 animate={{
                     x: `${tileProps.x + messy.x}vmin`,
                     y: `${tileProps.y + messy.y}vmin`,
-                    rotate: rotation.get(),
                     scale: 1,
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 }}
@@ -261,34 +262,18 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                         width: tileWidth,
                         height: tileHeight,
                         overflow: 'visible',
-                        transform: `rotate(${-rotation.get()}deg)`,
                     }}
                     width={tileWidth}
                     height={tileHeight}
-                    viewBox={`-${TILE_WIDTH / 2} -${TILE_HEIGHT / 2} ${TILE_WIDTH} ${TILE_HEIGHT}`}>
+                    viewBox={`0 0 ${TILE_WIDTH} ${TILE_HEIGHT}`}>
                     
                     <defs>
-                        {/* Shadow gradient (dark green) */}
-                        <linearGradient 
-                            id="shadowGradient" 
-                            x1={pathData.leftX} 
-                            y1="0" 
-                            x2={pathData.rightX} 
-                            y2="0"
-                            gradientUnits="userSpaceOnUse">
-                            <stop offset="0%" stopColor="#020" />
-                            <stop offset={`${Math.max(0, pathData.gradientPosition - 15)}%`} stopColor="#020" />
-                            <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgba(5, 17, 0, ${1 - pathData.gradientIntensity * 0.3})`} />
-                            <stop offset={`${Math.min(100, pathData.gradientPosition + 15)}%`} stopColor="#020" />
-                            <stop offset="100%" stopColor="#020" />
-                        </linearGradient>
-                        
                         {/* Main side gradient (light gray) */}
                         <linearGradient 
                             id="sideGradient" 
-                            x1={pathData.leftX} 
+                            x1={pathData.left}
                             y1="0" 
-                            x2={pathData.rightX} 
+                            x2={pathData.right}
                             y2="0"
                             gradientUnits="userSpaceOnUse">
                             <stop offset="0%" stopColor="rgb(153, 153, 153)" />
@@ -299,7 +284,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                         </linearGradient>
                     </defs>
 
-                    <path d={pathData.path} fill="url(#shadowGradient)" stroke="url(#shadowGradient)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
+                    <path d={pathData.path} fill="url(#shadowGradient)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
                           transform={`translate(0, ${TILE_THICKNESS})`}/>
                     <path d={pathData.path} fill="url(#sideGradient)" stroke="url(#sideGradient)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
                 </svg>
