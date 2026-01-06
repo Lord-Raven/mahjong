@@ -43,11 +43,11 @@ const GRADIENT_STRING: string = Array(99).fill(0).map((_, i) => {
         const prevIn = HIGHLIGHTS.includes(position - 1);
         const nextIn = HIGHLIGHTS.includes(position + 1);
         if (!prevIn && !nextIn) {
-            return `#000 ${position - 0.2}%, #ccc ${position}%, #000 ${position + 0.2}%`;
+            return `#000 ${position - 0.5}%, #ccc ${position - 0.4}%, #ccc ${position + 0.4}%, #000 ${position + 0.5}%`;
         } else if (!prevIn && nextIn) {
-            return `#000 ${position - 0.2}%, #ccc ${position}%`;
+            return `#000 ${position - 0.5}%, #ccc ${position - 0.4}%`;
         } else if (prevIn && !nextIn) {
-            return `#ccc ${position}%, #000 ${position + 0.2}%`;
+            return `#ccc ${position + 0.4}%, #000 ${position + 0.5}%`;
         } else { // both are in, so this should already be highlighted; no need to be explicit
             return null;
         }
@@ -113,8 +113,8 @@ const getTilePath = (rotation: number): { path: string; gradientPosition: number
     
     // Calculate gradient position and intensity based on the fifth point's x position
     const fifthPointX = finalPositions[4].x;
-    const leftmostX = finalPositions[0].x;
-    const rightmostX = finalPositions[2].x;
+    const leftmostX = finalPositions[0].x - TILE_BORDER;
+    const rightmostX = finalPositions[2].x + TILE_BORDER;
     const rangeX = rightmostX - leftmostX;
     
     // Normalize the position of the fifth point between left and right (0 to 1)
@@ -277,11 +277,11 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                         
                         {/* Main side gradient (light gray) */}
                         <linearGradient id="sideGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#888" />
-                            <stop offset={`${Math.max(0, pathData.gradientPosition - 15)}%`} stopColor="#888" />
-                            <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgb(${204 + Math.round(51 * pathData.gradientIntensity)}, ${204 + Math.round(51 * pathData.gradientIntensity)}, ${204 + Math.round(51 * pathData.gradientIntensity)})`} />
-                            <stop offset={`${Math.min(100, pathData.gradientPosition + 15)}%`} stopColor="#888" />
-                            <stop offset="100%" stopColor="#888" />
+                            <stop offset="0%" stopColor="rgb(153, 153, 153)" />
+                            <stop offset={`${Math.max(0, pathData.gradientPosition - 10)}%`} stopColor="rgb(153, 153, 153)" />
+                            <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgb(${153 + Math.round(51 * pathData.gradientIntensity)}, ${153 + Math.round(51 * pathData.gradientIntensity)}, ${153 + Math.round(51 * pathData.gradientIntensity)})`} />
+                            <stop offset={`${Math.min(100, pathData.gradientPosition + 10)}%`} stopColor="rgb(153, 153, 153)" />
+                            <stop offset="100%" stopColor="rgb(153, 153, 153)" />
                         </linearGradient>
                     </defs>
 
