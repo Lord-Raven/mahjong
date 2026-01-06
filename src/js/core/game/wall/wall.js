@@ -9,7 +9,7 @@ const BASE = base
   .concat([34, 35, 36, 37, 38, 39, 40, 41]);
 
 /**
- * This basically represents a shuffled a pile of tiles
+ * This basically represents a shuffled pile of tiles
  * for dealing from during a hand of play.
  */
 class Wall {

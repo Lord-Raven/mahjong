@@ -20,7 +20,8 @@
     "@typescript-eslint/parser": "^7.4.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "vite-plugin-dts": "^3.9.1"
+    "vite-plugin-dts": "^3.9.1",
+    "framer-motion": "^11.6.0"
   },
   "engines": {
     "node": "24.2.0"
