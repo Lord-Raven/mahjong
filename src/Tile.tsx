@@ -267,7 +267,13 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                     
                     <defs>
                         {/* Shadow gradient (dark green) */}
-                        <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <linearGradient 
+                            id="shadowGradient" 
+                            x1={-TILE_WIDTH + TILE_BEVEL - TILE_BORDER} 
+                            y1="0" 
+                            x2={-TILE_BEVEL + TILE_BORDER} 
+                            y2="0"
+                            gradientUnits="userSpaceOnUse">
                             <stop offset="0%" stopColor="#020" />
                             <stop offset={`${Math.max(0, pathData.gradientPosition - 15)}%`} stopColor="#020" />
                             <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgba(5, 17, 0, ${1 - pathData.gradientIntensity * 0.3})`} />
@@ -276,7 +282,13 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                         </linearGradient>
                         
                         {/* Main side gradient (light gray) */}
-                        <linearGradient id="sideGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <linearGradient 
+                            id="sideGradient" 
+                            x1={-TILE_WIDTH + TILE_BEVEL - TILE_BORDER} 
+                            y1="0" 
+                            x2={-TILE_BEVEL + TILE_BORDER} 
+                            y2="0"
+                            gradientUnits="userSpaceOnUse">
                             <stop offset="0%" stopColor="rgb(153, 153, 153)" />
                             <stop offset={`${Math.max(0, pathData.gradientPosition - 10)}%`} stopColor="rgb(153, 153, 153)" />
                             <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgb(${153 + Math.round(51 * pathData.gradientIntensity)}, ${153 + Math.round(51 * pathData.gradientIntensity)}, ${153 + Math.round(51 * pathData.gradientIntensity)})`} />
