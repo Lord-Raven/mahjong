@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useId} from 'react';
 import {motion, useMotionValue, useMotionValueEvent} from 'framer-motion';
 import tileset from './assets/img/tiles/default-tileset.png';
 import {BACK_INDEX, SIDE_INDEX, TileValue} from "./TileValue";
@@ -147,6 +147,8 @@ const getTilePath = (rotation: number): { path: string; left: number, right: num
 }
 
 const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
+    const uniqueId = useId();
+    const sideGradientId = `sideGradient-${uniqueId}`;
 
     const calculateTilesetPosition = (index: number): string => {
         return `${TILESET_HORIZONTAL_OFFSET + ((index % TILES_PER_ROW) * TILESET_TILE_OFFSET_WIDTH)}% ${TILESET_VERTICAL_OFFSET + Math.floor(index / TILES_PER_ROW) * TILESET_TILE_OFFSET_HEIGHT}%`;
@@ -270,7 +272,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                     <defs>
                         {/* Main side gradient (light gray) */}
                         <linearGradient 
-                            id="sideGradient" 
+                            id={sideGradientId}
                             x1={pathData.left}
                             y1="0" 
                             x2={pathData.right}
@@ -284,9 +286,9 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                         </linearGradient>
                     </defs>
 
-                    <path d={pathData.path} fill="url(#shadowGradient)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
+                    <path d={pathData.path} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
                           transform={`translate(0, ${TILE_THICKNESS})`}/>
-                    <path d={pathData.path} fill="url(#sideGradient)" stroke="url(#sideGradient)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
+                    <path d={pathData.path} fill={`url(#${sideGradientId})`} stroke={`url(#${sideGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
                 </svg>
             </motion.div>
             {/* Top of tile: */}
