@@ -43,11 +43,11 @@ const GRADIENT_STRING: string = Array(99).fill(0).map((_, i) => {
         const prevIn = HIGHLIGHTS.includes(position - 1);
         const nextIn = HIGHLIGHTS.includes(position + 1);
         if (!prevIn && !nextIn) {
-            return `#000 ${position - 0.5}%, #ccc ${position - 0.4}%, #ccc ${position + 0.4}%, #000 ${position + 0.5}%`;
+            return `#000 ${position - 0.5}%, #aaa ${position - 0.4}%, #aaa ${position + 0.4}%, #000 ${position + 0.5}%`;
         } else if (!prevIn && nextIn) {
-            return `#000 ${position - 0.5}%, #ccc ${position - 0.4}%`;
+            return `#000 ${position - 0.5}%, #aaa ${position - 0.4}%`;
         } else if (prevIn && !nextIn) {
-            return `#ccc ${position + 0.4}%, #000 ${position + 0.5}%`;
+            return `#aaa ${position + 0.4}%, #000 ${position + 0.5}%`;
         } else { // both are in, so this should already be highlighted; no need to be explicit
             return null;
         }
@@ -73,7 +73,7 @@ type MessyProps = {
     rotation: number;
 }
 
-const getTilePath = (rotation: number): { path: string; left: number, right: number, top: number, bottom: number; gradientPosition: number; gradientIntensity: number } => {
+const getTilePath = (rotation: number): { path: string; left: number, right: number, gradientPosition: number; highlightIntensity: number, leftIntensity: number, rightIntensity: number } => {
     rotation = rotation % 360;
     const rad = (rotation * Math.PI) / 180;
 
@@ -123,7 +123,6 @@ const getTilePath = (rotation: number): { path: string; left: number, right: num
     // Calculate intensity: maximum in the middle, fading near edges
     // Using a smooth function that peaks at 0.5 and goes to 0 at edges
     const distanceFromCenter = Math.abs(normalizedPosition - 0.5);
-    const intensity = Math.max(0, 1 - (distanceFromCenter * 2)); // 1 at center, 0 at edges
     
     const path = `
         M ${finalPositions[0].x} ${finalPositions[0].y}
@@ -139,10 +138,10 @@ const getTilePath = (rotation: number): { path: string; left: number, right: num
         path,
         left: leftmostX,
         right: rightmostX,
-        top: finalPositions[1].y,
-        bottom: finalPositions[4].y,
         gradientPosition: normalizedPosition * 100, // Convert to percentage
-        gradientIntensity: intensity
+        highlightIntensity: Math.max(0, 1 - (distanceFromCenter * 2)), // 1 at center, 0 at edges
+        leftIntensity: Math.max(0, normalizedPosition),
+        rightIntensity: Math.max(0, normalizedPosition),
     };
 }
 
@@ -229,6 +228,16 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
         touchAction: 'manipulation',
         overflow: 'visible',
     }
+    const ultimateIntensity = Math.min(255,
+        ((204 * pathData.gradientPosition / 100) + // right-side contribution (brighter when near the right edge)
+            (102 * (1 - pathData.gradientPosition / 100))) * // left-side contribution(darker near left edge)
+        (1 + Math.max(0, pathData.highlightIntensity - 0.2))); // boost highlight intensity in the center
+
+    const leftEdgeColor = `rgb(102, 102, 102)`;
+    const rightEdgeColor = `rgb(204, 204, 204)`;
+    const leftColor = `rgb(${102 + Math.round(80 * pathData.leftIntensity)}, ${102 + Math.round(80 * pathData.leftIntensity)}, ${102 + Math.round(80 * pathData.leftIntensity)})`;
+    const rightColor = `rgb(${102 + Math.round(102 * pathData.rightIntensity)}, ${102 + Math.round(102 * pathData.rightIntensity)}, ${102 + Math.round(102 * pathData.rightIntensity)})`;
+    const highlightColor = `rgb(${ultimateIntensity}, ${ultimateIntensity}, ${ultimateIntensity})`;
 
     return (
         <>
@@ -275,33 +284,35 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                     
                     <defs>
                         {/* Single lighting gradient (white to brighter, represents shadow to highlight) */}
-                        <linearGradient 
+                        <linearGradient
                             id={lightingGradientId}
                             x1={pathData.left}
-                            y1="0" 
+                            y1="0"
                             x2={pathData.right}
                             y2="0"
                             gradientUnits="userSpaceOnUse">
-                            <stop offset="0%" stopColor="rgb(153, 153, 153)" />
-                            <stop offset={`${Math.max(0, pathData.gradientPosition - 10)}%`} stopColor="rgb(153, 153, 153)" />
-                            <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgb(${153 + Math.round(102 * pathData.gradientIntensity)}, ${153 + Math.round(102 * pathData.gradientIntensity)}, ${153 + Math.round(102 * pathData.gradientIntensity)})`} />
-                            <stop offset={`${Math.min(100, pathData.gradientPosition + 10)}%`} stopColor="rgb(153, 153, 153)" />
-                            <stop offset="100%" stopColor="rgb(153, 153, 153)" />
+                            <stop offset="0%" stopColor={leftEdgeColor}/>
+                            <stop offset={`${Math.max(0, pathData.gradientPosition - 10)}%`} stopColor={leftColor}/>
+                            <stop offset={`${pathData.gradientPosition}%`} stopColor={highlightColor}/>
+                            <stop offset={`${Math.min(100, pathData.gradientPosition + 10)}%`} stopColor={rightColor}/>
+                            <stop offset="100%" stopColor={rightEdgeColor}/>
                         </linearGradient>
                     </defs>
 
                     {/* Bottom section with green base color */}
-                    <g style={{mixBlendMode: 'multiply'}}>
+                    <g style={{isolation: 'isolate'}}>
                         <path d={pathData.path} fill="rgb(0, 153, 85)" stroke="rgb(0, 153, 85)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
                               transform={`translate(0, ${TILE_THICKNESS})`}/>
                         <path d={pathData.path} fill={`url(#${lightingGradientId})`} stroke={`url(#${lightingGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
+                              style={{mixBlendMode: 'multiply'}}
                               transform={`translate(0, ${TILE_THICKNESS})`}/>
                     </g>
 
                     {/* Main side with gray base color */}
-                    <g style={{mixBlendMode: 'multiply'}}>
+                    <g style={{isolation: 'isolate'}}>
                         <path d={pathData.path} fill="rgb(255, 255, 255)" stroke="rgb(255, 255, 255)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
-                        <path d={pathData.path} fill={`url(#${lightingGradientId})`} stroke={`url(#${lightingGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
+                        <path d={pathData.path} fill={`url(#${lightingGradientId})`} stroke={`url(#${lightingGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
+                              style={{mixBlendMode: 'multiply'}}/>
                     </g>
                 </svg>
             </motion.div>
@@ -346,9 +357,6 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                 }}
             >
                 <div style={tileStyle}>
-                    {/* Visual content already in your top face */}
-                    {/* ... */}
-
                     {/* Stationary highlight overlay */}
                     <div
                         style={{
