@@ -148,7 +148,7 @@ const getTilePath = (rotation: number): { path: string; left: number, right: num
 
 const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
     const uniqueId = useId();
-    const sideGradientId = `sideGradient-${uniqueId}`;
+    const lightingGradientId = `lightingGradient-${uniqueId}`;
 
     const calculateTilesetPosition = (index: number): string => {
         return `${TILESET_HORIZONTAL_OFFSET + ((index % TILES_PER_ROW) * TILESET_TILE_OFFSET_WIDTH)}% ${TILESET_VERTICAL_OFFSET + Math.floor(index / TILES_PER_ROW) * TILESET_TILE_OFFSET_HEIGHT}%`;
@@ -184,6 +184,9 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
     }
 
     const rotation = useMotionValue(tileProps.rotation + messy.rotation);
+    // Track the actual animated rotation of the tile face
+    const animatedRotation = useMotionValue(tileProps.rotation + messy.rotation);
+    
     // Need to update rotation if either tileProps or messy changes:
     useEffect(() => {
         rotation.set(tileProps.rotation + messy.rotation);
@@ -198,8 +201,9 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
         return () => clearInterval(interval);
     }, [rotation]);
 
-    const [pathData, setPathData] = useState(() => getTilePath(rotation.get()));
-    useMotionValueEvent(rotation, 'change', (r) => {
+    const [pathData, setPathData] = useState(() => getTilePath(animatedRotation.get()));
+    // Update path data based on the actual animated rotation value
+    useMotionValueEvent(animatedRotation, 'change', (r) => {
         setPathData(getTilePath(r));
     })
     // Index within the tileset:
@@ -270,9 +274,9 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                     viewBox={`0 0 ${TILE_WIDTH} ${TILE_HEIGHT}`}>
                     
                     <defs>
-                        {/* Main side gradient (light gray) */}
+                        {/* Single lighting gradient (white to brighter, represents shadow to highlight) */}
                         <linearGradient 
-                            id={sideGradientId}
+                            id={lightingGradientId}
                             x1={pathData.left}
                             y1="0" 
                             x2={pathData.right}
@@ -280,15 +284,25 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                             gradientUnits="userSpaceOnUse">
                             <stop offset="0%" stopColor="rgb(153, 153, 153)" />
                             <stop offset={`${Math.max(0, pathData.gradientPosition - 10)}%`} stopColor="rgb(153, 153, 153)" />
-                            <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgb(${153 + Math.round(51 * pathData.gradientIntensity)}, ${153 + Math.round(51 * pathData.gradientIntensity)}, ${153 + Math.round(51 * pathData.gradientIntensity)})`} />
+                            <stop offset={`${pathData.gradientPosition}%`} stopColor={`rgb(${153 + Math.round(102 * pathData.gradientIntensity)}, ${153 + Math.round(102 * pathData.gradientIntensity)}, ${153 + Math.round(102 * pathData.gradientIntensity)})`} />
                             <stop offset={`${Math.min(100, pathData.gradientPosition + 10)}%`} stopColor="rgb(153, 153, 153)" />
                             <stop offset="100%" stopColor="rgb(153, 153, 153)" />
                         </linearGradient>
                     </defs>
 
-                    <path d={pathData.path} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
-                          transform={`translate(0, ${TILE_THICKNESS})`}/>
-                    <path d={pathData.path} fill={`url(#${sideGradientId})`} stroke={`url(#${sideGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
+                    {/* Bottom section with green base color */}
+                    <g style={{mixBlendMode: 'multiply'}}>
+                        <path d={pathData.path} fill="rgb(0, 153, 85)" stroke="rgb(0, 153, 85)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
+                              transform={`translate(0, ${TILE_THICKNESS})`}/>
+                        <path d={pathData.path} fill={`url(#${lightingGradientId})`} stroke={`url(#${lightingGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
+                              transform={`translate(0, ${TILE_THICKNESS})`}/>
+                    </g>
+
+                    {/* Main side with gray base color */}
+                    <g style={{mixBlendMode: 'multiply'}}>
+                        <path d={pathData.path} fill="rgb(255, 255, 255)" stroke="rgb(255, 255, 255)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
+                        <path d={pathData.path} fill={`url(#${lightingGradientId})`} stroke={`url(#${lightingGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
+                    </g>
                 </svg>
             </motion.div>
             {/* Top of tile: */}
@@ -298,6 +312,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
                     zIndex: tileProps.layer * 2 + 1,
                     x: dragX,
                     y: dragY,
+                    rotate: animatedRotation,
                 }}
                 animate={{
                     x: `${tileProps.x + messy.x}vmin`,
