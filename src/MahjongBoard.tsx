@@ -51,7 +51,7 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
             boxSizing: 'border-box',
             backgroundColor: '#006400', // Dark green background for the table
         }}>
-            {/* Build the wall around the center of the board.
+            {/* Build the wall around the center of the board.*/
                 gameState.wall.map((tile, index) => {
                     // Build a two-layer square of tiles around the center of the board.
                     // Each side of the wall has 17 tiles (34 total per layer), and there are two layers.
@@ -101,7 +101,7 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
 
                     )
                 })
-            */}
+            }
 
 
             {/* Use framer to position everything relatively within the play area (this div).
