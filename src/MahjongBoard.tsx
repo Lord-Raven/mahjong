@@ -39,6 +39,24 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
         });
     };
 
+    // Helpers to compute centered starts
+    const boardOrigin = playerAreaSize;
+    const boardInner = boardSize;
+
+    const centerRowStartX = (count: number) => {
+        return boardOrigin + Math.max(0, (boardInner - count * TILE_WIDTH) / 2);
+    };
+
+    const centerColumnStartY = (count: number) => {
+        return boardOrigin + Math.max(0, (boardInner - count * TILE_WIDTH) / 2);
+    };
+
+    const discardGrid = (index: number, columns = 6) => {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        return { col, row };
+    };
+
     return (
         /* The main container for the mahjong board; this should be displaySize height and width and centered. */
         <div style={{
@@ -46,10 +64,10 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
             height: `${displaySize}vmin`,
             position: 'relative',
             margin: '0 auto',
-            border: '2vmin solid #8B4513', // Brown border to represent the table edge
+            border: '2vmin solid #8B4513',
             borderRadius: '5vmin',
             boxSizing: 'border-box',
-            backgroundColor: '#006400', // Dark green background for the table
+            backgroundColor: '#006400',
         }}>
             {/* Build the wall around the center of the board.*/
                 gameState.wall.map((tile, index) => {
@@ -108,82 +126,107 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
             Start with player areas, laying out each hand and discards.
             */}
 
-            {/* South player, at the bottom. Display a Tile for each tile in hand */
-                gameState.players[0].hand.map((tile, index) => {
-                    const key = `south-hand-${index}`;
-                    const defaultX = 10 + index * TILE_WIDTH;
-                    const defaultY = boardSize + playerAreaSize;
-                    const pos = getTilePosition(key, defaultX, defaultY, 0);
-                    return (
-                        <Tile
-                            key={key}
-                            x={pos.x}
-                            y={pos.y}
-                            rotation={pos.rotation}
-                            faceUp={true}
-                            value={tile}
-                            layer={1}
-                        />
-                    );
-                })
-            }
+            {/* South player (players[0]) - centered horizontally below the board */}
             {
-                gameState.players[0].discard.map((tile, index) => {
-                    const key = `south-discard-${index}`;
-                    const defaultX = index * TILE_WIDTH;
-                    const defaultY = boardSize + playerAreaSize - 10;
-                    const pos = getTilePosition(key, defaultX, defaultY, 0);
-                    return (
-                        <Tile
-                            key={key}
-                            x={pos.x}
-                            y={pos.y}
-                            rotation={pos.rotation}
-                            faceUp={true}
-                            value={tile}
-                            layer={1}
-                        />
-                    );
-                })
+                (() => {
+                    const hand = gameState.players[0].hand;
+                    const startX = centerRowStartX(hand.length);
+                    const y = boardOrigin + boardInner + (playerAreaSize - TILE_THICKNESS) / 2;
+                    return hand.map((tile, index) => {
+                        const key = `south-hand-${index}`;
+                        const defaultX = startX + index * TILE_WIDTH;
+                        const defaultY = y;
+                        const pos = getTilePosition(key, defaultX, defaultY, 0);
+                        return (
+                            <Tile
+                                key={key}
+                                x={pos.x}
+                                y={pos.y}
+                                rotation={pos.rotation}
+                                faceUp={true}
+                                value={tile}
+                                layer={1}
+                            />
+                        );
+                    });
+                })()
             }
 
-            {/* West Player, on the left. Rotate tiles 90 degrees */
-                gameState.players[1].hand.map((tile, index) => {
-                    const key = `west-hand-${index}`;
-                    const defaultX = boardSize / 2;
-                    const defaultY = index * TILE_WIDTH;
-                    const pos = getTilePosition(key, defaultX, defaultY, 90);
-                    return (
-                        <Tile
-                            key={key}
-                            x={pos.x}
-                            y={pos.y}
-                            rotation={pos.rotation}
-                            faceUp={true}
-                            value={tile}
-                            layer={1}
-                        />
-                    );
-                })
-            }
+            {/* South discards - compact grid just above the hand */}
             {
-                gameState.players[1].discard.map((tile, index) => {
-                    const key = `west-discard-${index}`;
-                    const defaultX = boardSize + playerAreaSize - 10;
-                    const defaultY = index * TILE_WIDTH;
-                    const pos = getTilePosition(key, defaultX, defaultY, 90);
-                    return (
-                        <Tile
-                            key={key}
-                            x={pos.x}
-                            y={pos.y}
-                            rotation={pos.rotation}
-                            faceUp={true}
-                            value={tile}
-                            layer={1}
-                        />
-                    );
-                })
+                (() => {
+                    const discards = gameState.players[0].discard;
+                    return discards.map((tile, index) => {
+                        const { col, row } = discardGrid(index, 6);
+                        const gridStartX = boardOrigin + (boardInner - 6 * TILE_WIDTH) / 2;
+                        const x = gridStartX + col * (TILE_WIDTH + 0.5);
+                        const y = boardOrigin + boardInner + (playerAreaSize - TILE_THICKNESS) / 2 - (row + 1) * (TILE_WIDTH + 2);
+                        const key = `south-discard-${index}`;
+                        const pos = getTilePosition(key, x, y, 0);
+                        return (
+                            <Tile
+                                key={key}
+                                x={pos.x}
+                                y={pos.y}
+                                rotation={pos.rotation}
+                                faceUp={true}
+                                value={tile}
+                                layer={1}
+                            />
+                        );
+                    });
+                })()
+            }
+
+            {/* West player (players[1]) - centered vertically on left side, rotated 90deg */}
+            {
+                (() => {
+                    const hand = gameState.players[1].hand;
+                    const x = (playerAreaSize - TILE_THICKNESS) / 2;
+                    const startY = centerColumnStartY(hand.length);
+                    return hand.map((tile, index) => {
+                        const key = `west-hand-${index}`;
+                        const defaultX = x;
+                        const defaultY = startY + index * TILE_WIDTH;
+                        const pos = getTilePosition(key, defaultX, defaultY, 90);
+                        return (
+                            <Tile
+                                key={key}
+                                x={pos.x}
+                                y={pos.y}
+                                rotation={pos.rotation}
+                                faceUp={true}
+                                value={tile}
+                                layer={1}
+                            />
+                        );
+                    });
+                })()
+            }
+
+            {/* West discards - compact grid just to the right of the west hand */}
+            {
+                (() => {
+                    const discards = gameState.players[1].discard;
+                    return discards.map((tile, index) => {
+                        const { col, row } = discardGrid(index, 6);
+                        const x = boardOrigin - (playerAreaSize - TILE_THICKNESS) / 2 + col * (TILE_WIDTH + 0.5);
+                        const y = boardOrigin + (boardInner - 6 * TILE_WIDTH) / 2 + row * (TILE_WIDTH + 2);
+                        const key = `west-discard-${index}`;
+                        const pos = getTilePosition(key, x, y, 90);
+                        return (
+                            <Tile
+                                key={key}
+                                x={pos.x}
+                                y={pos.y}
+                                rotation={pos.rotation}
+                                faceUp={true}
+                                value={tile}
+                                layer={1}
+                            />
+                        );
+                    });
+                })()
             }
 
         </div>

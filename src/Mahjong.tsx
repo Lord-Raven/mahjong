@@ -103,17 +103,6 @@ const Mahjong: React.FC = () => {
             ) : (
                 <>
                     <div>
-                        <h2>Players</h2>
-                        <ul>
-                            {gameState.players.map(player => (
-                                <li key={player.id} style={{ fontWeight: player.isActive ? 'bold' : 'normal' }}>
-                                    {player.name} (Wind: {player.wind}) - Score: {player.score}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div>
-                        <h2>Board</h2>
                         <MahjongBoard
                             gameState={gameState}
                         />
