@@ -5,16 +5,14 @@ import {BACK_INDEX, SIDE_INDEX, TileValue} from "./TileValue";
 
 // A visual representation of a single Mahjong tile. Tiles can be face up or face down,
 // and can be positioned and rotated on the board.
-// I want tiles to have a secondary layer that renders beneath other tiles, to give a sense of depth.
-// This could be achieved by rendering a solid color rectangle with a shadow beneath the tile?
-// Tiles should not occupy any space in the layout, and should be positioned absolutely within a relative container.
 
+export const TILE_SIZE = 4;
 export const TILE_RATIO = 1.3;
-export const TILE_WIDTH = 12;
+export const TILE_WIDTH = TILE_SIZE;
 export const TILE_HEIGHT = TILE_WIDTH * TILE_RATIO;
-export const TILE_THICKNESS = 1.2;
-export const TILE_BORDER = 0.8;
-export const TILE_BEVEL = 2;
+export const TILE_THICKNESS = TILE_SIZE * 0.1;
+export const TILE_BORDER = TILE_SIZE * 0.06;
+export const TILE_BEVEL = TILE_SIZE * 0.15;
 export const TILE_INSIDE_BEVEL = TILE_BEVEL * 0.75;
 
 const TILES_PER_ROW = 10;
@@ -51,7 +49,7 @@ const GRADIENT_STRING: string = Array(99).fill(0).map((_, i) => {
         } else { // both are in, so this should already be highlighted; no need to be explicit
             return null;
         }
-    } else { // No hilight; transitions are covered by any highlighted neighbors
+    } else { // No highlight; transitions are covered by any highlighted neighbors
         return null;
     }
 }).filter(s => s !== null).join(', ');
@@ -63,8 +61,6 @@ type TileProps = {
     faceUp: boolean; // whether the tile is face up or down
     value: string; // the tile value (emoji)
     layer: number; // visual layer, which impacts z-index
-    draggable?: boolean; // whether the tile can be dragged
-    onDragEnd?: (x: number, y: number) => void; // callback when drag ends
 }
 
 type MessyProps = {
@@ -210,7 +206,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
         position: 'absolute',
         width: 0,
         height: 0,
-        pointerEvents: tileProps.draggable ? 'auto' : 'none',
+        pointerEvents: 'auto',
         userSelect: 'none',
         touchAction: 'manipulation',
         overflow: 'visible',
@@ -272,7 +268,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
 
                     {/* Bottom section with green base color */}
                     <g style={{isolation: 'isolate'}}>
-                        <path d={pathData.path} fill="rgb(0, 153, 85)" stroke="rgb(0, 153, 85)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
+                        <path d={pathData.path} fill={tileProps.faceUp ? "rgb(0, 153, 85)" : "rgb(255, 255, 255)"} stroke={tileProps.faceUp ? "rgb(0, 153, 85)" : "rgb(255, 255, 255)"} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
                               transform={`translate(0, ${TILE_THICKNESS})`}/>
                         <path d={pathData.path} fill={`url(#${lightingGradientId})`} stroke={`url(#${lightingGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
                               style={{mixBlendMode: 'multiply'}}
@@ -281,7 +277,7 @@ const Tile: React.FC<TileProps> = (tileProps: TileProps) => {
 
                     {/* Main side with gray base color */}
                     <g style={{isolation: 'isolate'}}>
-                        <path d={pathData.path} fill="rgb(255, 255, 255)" stroke="rgb(255, 255, 255)" strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
+                        <path d={pathData.path} fill={tileProps.faceUp ? "rgb(255, 255, 255)" : "rgb(0, 153, 85)"} stroke={tileProps.faceUp ? "rgb(255, 255, 255)" : "rpg(0, 153, 85)"} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"/>
                         <path d={pathData.path} fill={`url(#${lightingGradientId})`} stroke={`url(#${lightingGradientId})`} strokeWidth={TILE_BEVEL * 2} strokeLinejoin="round"
                               style={{mixBlendMode: 'multiply'}}/>
                     </g>

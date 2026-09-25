@@ -55,7 +55,7 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
                 gameState.wall.map((tile, index) => {
                     // Build a two-layer square of tiles around the center of the board.
                     // Each side of the wall has 17 tiles (34 total per layer), and there are two layers.
-                    // The wall starts at the top left corner and goes clockwise around the board.
+                    // The wall starts in the top left corner and goes clockwise around the board.
                     const layer = index < 68 ? 0 : 1; // Two layers of 68 tiles each
                     const positionInLayer = index % 68;
                     const side = Math.floor(positionInLayer / 17); // 0=top, 1=right, 2=bottom, 3=left
@@ -69,12 +69,12 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
                         case 0: // Top side
                             x = (playerAreaSize + positionOnSide * TILE_WIDTH);
                             y = playerAreaSize - offset;
-                            rotation = 30;
+                            rotation = 0;
                             break;
                         case 1: // Right side
                             x = (boardSize + playerAreaSize);
                             y = (playerAreaSize + positionOnSide * TILE_WIDTH) - offset;
-                            rotation = -60;
+                            rotation = -90;
                             break;
                         case 2: // Bottom side
                             x = (boardSize + playerAreaSize) - (positionOnSide * TILE_WIDTH);
@@ -84,7 +84,7 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
                         case 3: // Left side
                             x = playerAreaSize;
                             y = (boardSize + playerAreaSize) - (positionOnSide * TILE_WIDTH) - offset;
-                            rotation = 45;
+                            rotation = 90;
                             break;
                     }
 
@@ -111,7 +111,7 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
             {/* South player, at the bottom. Display a Tile for each tile in hand */
                 gameState.players[0].hand.map((tile, index) => {
                     const key = `south-hand-${index}`;
-                    const defaultX = index * TILE_WIDTH;
+                    const defaultX = 10 + index * TILE_WIDTH;
                     const defaultY = boardSize + playerAreaSize;
                     const pos = getTilePosition(key, defaultX, defaultY, 0);
                     return (
@@ -123,8 +123,6 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
                             faceUp={true}
                             value={tile}
                             layer={1}
-                            draggable={true}
-                            onDragEnd={(newX, newY) => updateTilePosition(key, newX, newY)}
                         />
                     );
                 })
@@ -144,8 +142,6 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
                             faceUp={true}
                             value={tile}
                             layer={1}
-                            draggable={true}
-                            onDragEnd={(newX, newY) => updateTilePosition(key, newX, newY)}
                         />
                     );
                 })
@@ -154,10 +150,9 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
             {/* West Player, on the left. Rotate tiles 90 degrees */
                 gameState.players[1].hand.map((tile, index) => {
                     const key = `west-hand-${index}`;
-                    const defaultX = index * (TILE_WIDTH * 1.7);
-                    const defaultY = index * (TILE_WIDTH * 1.7);
-                    const defaultRotation = index * 30;
-                    const pos = getTilePosition(key, defaultX, defaultY, defaultRotation);
+                    const defaultX = boardSize / 2;
+                    const defaultY = index * TILE_WIDTH;
+                    const pos = getTilePosition(key, defaultX, defaultY, 90);
                     return (
                         <Tile
                             key={key}
@@ -167,8 +162,6 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
                             faceUp={true}
                             value={tile}
                             layer={1}
-                            draggable={true}
-                            onDragEnd={(newX, newY) => updateTilePosition(key, newX, newY)}
                         />
                     );
                 })
@@ -176,10 +169,9 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
             {
                 gameState.players[1].discard.map((tile, index) => {
                     const key = `west-discard-${index}`;
-                    const defaultX = index * (TILE_WIDTH * 1.7);
-                    const defaultY = index * (TILE_WIDTH * 1.7);
-                    const defaultRotation = index * 30;
-                    const pos = getTilePosition(key, defaultX, defaultY, defaultRotation);
+                    const defaultX = boardSize + playerAreaSize - 10;
+                    const defaultY = index * TILE_WIDTH;
+                    const pos = getTilePosition(key, defaultX, defaultY, 90);
                     return (
                         <Tile
                             key={key}
@@ -189,8 +181,6 @@ const MahjongBoard: React.FC<MahjongBoardProps> = ({ gameState }) => {
                             faceUp={true}
                             value={tile}
                             layer={1}
-                            draggable={true}
-                            onDragEnd={(newX, newY) => updateTilePosition(key, newX, newY)}
                         />
                     );
                 })
